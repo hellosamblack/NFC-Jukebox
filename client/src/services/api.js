@@ -4,7 +4,8 @@ async function fetchJSON(url, options = {}) {
   const res = await fetch(url, options);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Request failed: ${res.status}`);
+    const parts = [body.error, body.message].filter(Boolean);
+    throw new Error(parts.length ? parts.join(': ') : `Request failed: ${res.status}`);
   }
   return res.json();
 }
@@ -45,6 +46,18 @@ export async function getSpotifyArtist(id, token) {
 export async function searchYouTube(query) {
   const params = new URLSearchParams({ q: query });
   return fetchJSON(`${API_BASE}/youtube/search?${params}`);
+}
+
+export async function getYouTubePlaylists(ytToken) {
+  return fetchJSON(`${API_BASE}/youtube/playlists`, {
+    headers: { 'yt-access-token': ytToken },
+  });
+}
+
+export async function getYouTubeRecommendations(ytToken) {
+  return fetchJSON(`${API_BASE}/youtube/recommendations`, {
+    headers: { 'yt-access-token': ytToken },
+  });
 }
 
 export async function renderSticker(config) {

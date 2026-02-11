@@ -1,5 +1,6 @@
 const sharp = require('sharp');
-const { STICKER_DIMENSIONS } = require('../utils/constants');
+const { URL } = require('url');
+const { STICKER_DIMENSIONS, DPI } = require('../utils/constants');
 const { getGenreConfig } = require('./genreService');
 
 const BLEED_W = STICKER_DIMENSIONS.BLEED.pixels.w;
@@ -9,6 +10,51 @@ const SAFE_H = STICKER_DIMENSIONS.SAFE.pixels.h;
 
 const SAFE_X = Math.round((BLEED_W - SAFE_W) / 2);
 const SAFE_Y = Math.round((BLEED_H - SAFE_H) / 2);
+
+const MAX_IMAGE_SIZE = 20 * 1024 * 1024; // 20MB
+const FETCH_TIMEOUT_MS = 15000;
+
+/**
+ * Validate a URL is safe to fetch (block private IPs, non-http(s) schemes).
+ */
+function validateImageUrl(urlStr) {
+  let parsed;
+  try {
+    parsed = new URL(urlStr);
+  } catch {
+    throw new Error('Invalid image URL');
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('Only http and https URLs are allowed');
+  }
+
+  const hostname = parsed.hostname;
+
+  // Block private/internal ranges
+  const blockedPatterns = [
+    /^localhost$/i,
+    /^127\./,
+    /^10\./,
+    /^172\.(1[6-9]|2\d|3[01])\./,
+    /^192\.168\./,
+    /^169\.254\./,
+    /^0\./,
+    /^\[::1\]/,
+    /^\[fc/i,
+    /^\[fd/i,
+    /^\[fe80/i,
+    /^metadata\.google\.internal$/i,
+  ];
+
+  for (const pattern of blockedPatterns) {
+    if (pattern.test(hostname)) {
+      throw new Error('URLs pointing to private/internal networks are not allowed');
+    }
+  }
+
+  return parsed;
+}
 
 /**
  * Fetch image from URL or decode from base64, return a Sharp instance.
@@ -20,12 +66,36 @@ async function loadSourceImage(config) {
   }
 
   if (config.imageUrl) {
-    const response = await fetch(config.imageUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+    validateImageUrl(config.imageUrl);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(config.imageUrl, { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.startsWith('image/')) {
+        throw new Error(`Unexpected content-type: ${contentType}. Expected an image.`);
+      }
+
+      const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+      if (contentLength > MAX_IMAGE_SIZE) {
+        throw new Error(`Image too large (${contentLength} bytes). Max: ${MAX_IMAGE_SIZE} bytes.`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      if (arrayBuffer.byteLength > MAX_IMAGE_SIZE) {
+        throw new Error(`Image too large (${arrayBuffer.byteLength} bytes). Max: ${MAX_IMAGE_SIZE} bytes.`);
+      }
+
+      return sharp(Buffer.from(arrayBuffer));
+    } finally {
+      clearTimeout(timeout);
     }
-    const arrayBuffer = await response.arrayBuffer();
-    return sharp(Buffer.from(arrayBuffer));
   }
 
   throw new Error('No image source provided (imageUrl or imageBase64 required)');
@@ -61,6 +131,22 @@ function escapeXml(str) {
 }
 
 /**
+ * Map genre fontFamily to a system-safe fallback chain.
+ * Google Fonts may not be installed on the server; these fallbacks
+ * ensure consistent rendering across environments.
+ */
+const SYSTEM_FONT_FALLBACKS = {
+  serif: 'Georgia, "Times New Roman", Times, serif',
+  'sans-serif': 'Arial, Helvetica, "Liberation Sans", sans-serif',
+  monospace: '"Courier New", Courier, monospace',
+};
+
+function buildFontStack(genreFontFamily) {
+  // Provide the genre font first (available if installed), then system fallbacks
+  return `"${genreFontFamily}", ${SYSTEM_FONT_FALLBACKS['sans-serif']}`;
+}
+
+/**
  * Build an SVG string for text and genre icon overlay.
  */
 function buildTextOverlay(width, height, config) {
@@ -70,6 +156,7 @@ function buildTextOverlay(width, height, config) {
   const subtitle = escapeXml(config.customSubtitle || config.subtitle || 'Unknown Artist');
   const iconColor = genreConfig.color;
   const icon = escapeXml(genreConfig.icon);
+  const fontStack = escapeXml(buildFontStack(genreConfig.fontFamily));
 
   const gradientHeight = Math.round(height * 0.45);
   const gradientY = height - gradientHeight;
@@ -96,14 +183,14 @@ function buildTextOverlay(width, height, config) {
 
     <!-- Title text -->
     <text x="${textX}" y="${titleY}" fill="white" font-size="42" font-weight="bold"
-          font-family="${escapeXml(genreConfig.fontFamily)}, sans-serif"
+          font-family="${fontStack}"
           filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))">
       ${title}
     </text>
 
     <!-- Subtitle text -->
     <text x="${textX}" y="${subtitleY}" fill="rgba(255,255,255,0.9)" font-size="28" font-weight="400"
-          font-family="${escapeXml(genreConfig.fontFamily)}, sans-serif"
+          font-family="${fontStack}"
           filter="drop-shadow(0 1px 3px rgba(0,0,0,0.5))">
       ${subtitle}
     </text>
@@ -130,6 +217,7 @@ async function renderBackgroundToBuffer(config) {
   return sharp(base)
     .composite([{ input: vignetteOverlay, top: 0, left: 0 }])
     .png()
+    .withMetadata({ density: DPI })
     .toBuffer();
 }
 
@@ -143,7 +231,26 @@ async function renderStickerToBuffer(config) {
   return sharp(bgBuffer)
     .composite([{ input: textOverlay, top: 0, left: 0 }])
     .png()
+    .withMetadata({ density: DPI })
     .toBuffer();
+}
+
+/**
+ * Select the best PDFKit built-in font for a genre.
+ * PDFKit ships with Courier, Helvetica, Times-Roman (and bold/italic variants).
+ * We map genre font styles to the closest built-in font.
+ */
+function getPDFFont(genreFontFamily) {
+  // Serif-style genre fonts → Times-Roman
+  const serifFonts = [
+    'Playfair Display', 'Cormorant Garamond', 'Lora', 'Merriweather',
+    'Libre Baskerville', 'EB Garamond', 'Cinzel', 'DM Serif Display', 'Bitter',
+  ];
+  if (serifFonts.includes(genreFontFamily)) {
+    return { title: 'Times-Bold', subtitle: 'Times-Roman' };
+  }
+  // Default: sans-serif → Helvetica
+  return { title: 'Helvetica-Bold', subtitle: 'Helvetica' };
 }
 
 /**
@@ -174,6 +281,7 @@ async function renderStickerToPDFPage(doc, config, imageBuffer) {
   const genreConfig = getGenreConfig(genre);
   const title = config.customTitle || config.title || 'Unknown Title';
   const subtitle = config.customSubtitle || config.subtitle || 'Unknown Artist';
+  const pdfFonts = getPDFFont(genreConfig.fontFamily);
 
   const safeXPt = (SAFE_X / BLEED_W) * ptW;
   const safeYPt = (SAFE_Y / BLEED_H) * ptH;
@@ -185,12 +293,14 @@ async function renderStickerToPDFPage(doc, config, imageBuffer) {
 
   // Title
   doc
+    .font(pdfFonts.title)
     .fontSize(18)
     .fillColor('white')
     .text(title, textX, titleY, { width: safeWPt - 24, lineBreak: false, ellipsis: true });
 
   // Subtitle
   doc
+    .font(pdfFonts.subtitle)
     .fontSize(12)
     .fillColor('white', 0.9)
     .text(subtitle, textX, subtitleY, { width: safeWPt - 24, lineBreak: false, ellipsis: true });

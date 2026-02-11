@@ -6,7 +6,7 @@ import StickerEditor from './components/StickerEditor';
 import MyStickersList from './components/MyStickersList';
 import ExportView from './components/ExportView';
 import SettingsModal from './components/SettingsModal';
-import { searchSpotify, searchYouTube } from './services/api';
+import { searchSpotify, searchYouTube, getYouTubePlaylists, getYouTubeRecommendations } from './services/api';
 
 const TABS = [
   { id: 'search', label: 'Search', icon: '🔍' },
@@ -15,7 +15,7 @@ const TABS = [
 ];
 
 function AppContent() {
-  const { stickers, spotifyToken, saveProject, loadProject } = useProject();
+  const { stickers, spotifyToken, ytAccessToken, saveProject, loadProject } = useProject();
   const [activeTab, setActiveTab] = useState('search');
   const [showSettings, setShowSettings] = useState(false);
   const [searchSource, setSearchSource] = useState('Spotify');
@@ -76,6 +76,32 @@ function AppContent() {
   );
 
   const handleLoadMore = () => performSearch(lastQuery, true);
+
+  const handleYtPlaylists = async () => {
+    if (!ytAccessToken) return;
+    setLoading(true);
+    try {
+      const data = await getYouTubePlaylists(ytAccessToken);
+      setResults(data.results || []);
+      setHasMore(false);
+    } catch (err) {
+      console.error('YT playlists error:', err);
+    }
+    setLoading(false);
+  };
+
+  const handleYtRecommendations = async () => {
+    if (!ytAccessToken) return;
+    setLoading(true);
+    try {
+      const data = await getYouTubeRecommendations(ytAccessToken);
+      setResults(data.results || []);
+      setHasMore(false);
+    } catch (err) {
+      console.error('YT recommendations error:', err);
+    }
+    setLoading(false);
+  };
 
   const handleLoadProject = async (e) => {
     const file = e.target.files?.[0];
@@ -177,6 +203,9 @@ function AppContent() {
               typeFilter={typeFilter}
               onTypeFilterChange={setTypeFilter}
               loading={loading}
+              ytConnected={!!ytAccessToken}
+              onYtPlaylists={handleYtPlaylists}
+              onYtRecommendations={handleYtRecommendations}
             />
             <SearchResults
               results={results}

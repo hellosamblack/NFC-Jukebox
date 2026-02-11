@@ -62,7 +62,7 @@ router.get('/search', async (req, res) => {
   try {
     const api = getAuthenticatedApi(req);
     if (!api) {
-      return res.status(401).json({ error: 'Missing access_token header' });
+      return res.status(401).json({ error: 'Missing access-token header' });
     }
 
     const { q, type = 'album,playlist', offset = 0, limit = 20 } = req.query;
@@ -123,7 +123,7 @@ router.get('/album/:id', async (req, res) => {
   try {
     const api = getAuthenticatedApi(req);
     if (!api) {
-      return res.status(401).json({ error: 'Missing access_token header' });
+      return res.status(401).json({ error: 'Missing access-token header' });
     }
 
     const albumData = await api.getAlbum(req.params.id);
@@ -175,7 +175,7 @@ router.get('/playlist/:id', async (req, res) => {
   try {
     const api = getAuthenticatedApi(req);
     if (!api) {
-      return res.status(401).json({ error: 'Missing access_token header' });
+      return res.status(401).json({ error: 'Missing access-token header' });
     }
 
     const playlistData = await api.getPlaylist(req.params.id);
@@ -214,7 +214,7 @@ router.get('/artist/:id', async (req, res) => {
   try {
     const api = getAuthenticatedApi(req);
     if (!api) {
-      return res.status(401).json({ error: 'Missing access_token header' });
+      return res.status(401).json({ error: 'Missing access-token header' });
     }
 
     const artistData = await api.getArtist(req.params.id);

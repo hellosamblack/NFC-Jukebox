@@ -53,6 +53,16 @@ router.post('/export-project', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="nfc-jukebox-stickers-${uuidv4().slice(0, 8)}.zip"`);
 
     const archive = archiver('zip', { zlib: { level: 6 } });
+    archive.on('error', (err) => {
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Archive error', message: err.message });
+      } else {
+        res.end();
+      }
+    });
+    res.on('close', () => {
+      archive.abort();
+    });
     archive.pipe(res);
 
     for (let i = 0; i < stickers.length; i++) {

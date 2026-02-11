@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-export default function SearchBar({ onSearch, source, onSourceChange, typeFilter, onTypeFilterChange, loading }) {
+export default function SearchBar({ onSearch, source, onSourceChange, typeFilter, onTypeFilterChange, loading, ytConnected, onYtPlaylists, onYtRecommendations }) {
   const [query, setQuery] = useState('');
   const prevSearchRef = useRef({ query: '', source, typeFilter });
 
@@ -68,6 +68,23 @@ export default function SearchBar({ onSearch, source, onSourceChange, typeFilter
                 {t}
               </button>
             ))}
+          </div>
+        )}
+
+        {source === 'YouTube' && ytConnected && (
+          <div className="flex gap-2">
+            <button
+              onClick={onYtPlaylists}
+              className="px-3 py-1.5 rounded-md text-sm bg-red-900/30 border border-red-800 text-red-300 hover:bg-red-900/50 transition-colors cursor-pointer"
+            >
+              📋 My Playlists
+            </button>
+            <button
+              onClick={onYtRecommendations}
+              className="px-3 py-1.5 rounded-md text-sm bg-red-900/30 border border-red-800 text-red-300 hover:bg-red-900/50 transition-colors cursor-pointer"
+            >
+              ❤️ Liked Music
+            </button>
           </div>
         )}
       </div>

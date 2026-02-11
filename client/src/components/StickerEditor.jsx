@@ -24,8 +24,8 @@ export default function StickerEditor({ item, onClose, editingSticker }) {
     try {
       const data = await getSpotifyAlbum(id, spotifyToken);
       if (data.genres?.length) {
-        // Use genreService-style detection on client side
-        setGenre('Default');
+        const detectedFromAlbum = detectGenreClient(data.genres);
+        setGenre(detectedFromAlbum);
       }
       if (data.artistIds?.[0]) {
         const artist = await getSpotifyArtist(data.artistIds[0], spotifyToken);

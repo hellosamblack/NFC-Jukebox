@@ -7,6 +7,7 @@ const initialState = {
   stickers: [],
   spotifyToken: null,
   spotifyExpiry: null,
+  ytAccessToken: null,
 };
 
 function reducer(state, action) {
@@ -22,8 +23,14 @@ function reducer(state, action) {
       return { ...state, stickers: state.stickers.filter((s) => s.id !== action.id) };
     case 'SET_SPOTIFY_AUTH':
       return { ...state, spotifyToken: action.token, spotifyExpiry: action.expiry };
-    case 'LOAD_PROJECT':
-      return { ...state, stickers: action.stickers };
+    case 'SET_YT_AUTH':
+      return { ...state, ytAccessToken: action.token };
+    case 'LOAD_PROJECT': {
+      const stickersWithIds = (action.stickers || []).map((sticker) =>
+        sticker && sticker.id ? sticker : { ...sticker, id: crypto.randomUUID() },
+      );
+      return { ...state, stickers: stickersWithIds };
+    }
     case 'CLEAR':
       return { ...initialState };
     default:
@@ -48,6 +55,10 @@ export function ProjectProvider({ children }) {
 
   const setSpotifyAuth = useCallback((token, expiry) => {
     dispatch({ type: 'SET_SPOTIFY_AUTH', token, expiry });
+  }, []);
+
+  const setYtAuth = useCallback((token) => {
+    dispatch({ type: 'SET_YT_AUTH', token });
   }, []);
 
   const saveProject = useCallback(() => {
@@ -88,6 +99,7 @@ export function ProjectProvider({ children }) {
     updateSticker,
     removeSticker,
     setSpotifyAuth,
+    setYtAuth,
     saveProject,
     loadProject,
     clearProject,
