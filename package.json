@@ -1,0 +1,15 @@
+{
+  "name": "nfc-jukebox",
+  "version": "1.0.0",
+  "description": "Generate print-ready NFC card stickers with album art from Spotify and YouTube Music",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && node index.js",
+    "dev:client": "cd client && npx vite",
+    "build": "cd client && npm run build",
+    "install:all": "cd server && npm install && cd ../client && npm install"
+  },
+  "keywords": ["nfc", "jukebox", "sticker", "album-art", "spotify"],
+  "license": "MIT"
+}
