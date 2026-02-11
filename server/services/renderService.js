@@ -115,9 +115,9 @@ function buildTextOverlay(width, height, config) {
 }
 
 /**
- * Render a sticker to a PNG buffer.
+ * Render the background image with vignette only (no text), for PDF use.
  */
-async function renderStickerToBuffer(config) {
+async function renderBackgroundToBuffer(config) {
   const source = await loadSourceImage(config);
 
   const base = await source
@@ -126,17 +126,24 @@ async function renderStickerToBuffer(config) {
     .toBuffer();
 
   const vignetteOverlay = buildVignetteOverlay(BLEED_W, BLEED_H);
-  const textOverlay = buildTextOverlay(BLEED_W, BLEED_H, config);
 
-  const result = await sharp(base)
-    .composite([
-      { input: vignetteOverlay, top: 0, left: 0 },
-      { input: textOverlay, top: 0, left: 0 },
-    ])
+  return sharp(base)
+    .composite([{ input: vignetteOverlay, top: 0, left: 0 }])
     .png()
     .toBuffer();
+}
 
-  return result;
+/**
+ * Render a sticker to a PNG buffer (full render with text overlay).
+ */
+async function renderStickerToBuffer(config) {
+  const bgBuffer = await renderBackgroundToBuffer(config);
+  const textOverlay = buildTextOverlay(BLEED_W, BLEED_H, config);
+
+  return sharp(bgBuffer)
+    .composite([{ input: textOverlay, top: 0, left: 0 }])
+    .png()
+    .toBuffer();
 }
 
 /**
@@ -201,4 +208,4 @@ async function renderStickerToPDFPage(doc, config, imageBuffer) {
     .text(genreConfig.icon, iconXPt - 5, iconYPt - 5, { width: 10, align: 'center' });
 }
 
-module.exports = { renderStickerToBuffer, renderStickerToPDFPage };
+module.exports = { renderStickerToBuffer, renderBackgroundToBuffer, renderStickerToPDFPage };

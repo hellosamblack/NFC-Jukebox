@@ -2,7 +2,7 @@ const express = require('express');
 const PDFDocument = require('pdfkit');
 const archiver = require('archiver');
 const { v4: uuidv4 } = require('uuid');
-const { renderStickerToBuffer, renderStickerToPDFPage } = require('../services/renderService');
+const { renderStickerToBuffer, renderBackgroundToBuffer, renderStickerToPDFPage } = require('../services/renderService');
 const { STICKER_DIMENSIONS } = require('../utils/constants');
 
 const router = express.Router();
@@ -106,8 +106,8 @@ router.post('/export-pdf', async (req, res) => {
     doc.pipe(res);
 
     for (const config of stickers) {
-      // Pre-render the background image (without text overlay for PDF — we draw text with PDFKit vectors)
-      const imageBuffer = await renderStickerToBuffer(config);
+      // Render only the background image (vignette, no text) — text is drawn as PDF vectors
+      const imageBuffer = await renderBackgroundToBuffer(config);
       await renderStickerToPDFPage(doc, config, imageBuffer);
     }
 
