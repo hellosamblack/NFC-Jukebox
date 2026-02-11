@@ -75,12 +75,14 @@ export default function SearchBar({ onSearch, source, onSourceChange, typeFilter
           <div className="flex gap-2">
             <button
               onClick={onYtPlaylists}
+              aria-label="My Playlists"
               className="px-3 py-1.5 rounded-md text-sm bg-red-900/30 border border-red-800 text-red-300 hover:bg-red-900/50 transition-colors cursor-pointer"
             >
               📋 My Playlists
             </button>
             <button
               onClick={onYtRecommendations}
+              aria-label="Liked Music"
               className="px-3 py-1.5 rounded-md text-sm bg-red-900/30 border border-red-800 text-red-300 hover:bg-red-900/50 transition-colors cursor-pointer"
             >
               ❤️ Liked Music

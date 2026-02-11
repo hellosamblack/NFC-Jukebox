@@ -26,9 +26,9 @@ function reducer(state, action) {
     case 'SET_YT_AUTH':
       return { ...state, ytAccessToken: action.token };
     case 'LOAD_PROJECT': {
-      const stickersWithIds = (action.stickers || []).map((sticker) =>
-        sticker && sticker.id ? sticker : { ...sticker, id: crypto.randomUUID() },
-      );
+      const stickersWithIds = (action.stickers || [])
+        .filter(Boolean)
+        .map((sticker) => (sticker.id ? sticker : { ...sticker, id: crypto.randomUUID() }));
       return { ...state, stickers: stickersWithIds };
     }
     case 'CLEAR':

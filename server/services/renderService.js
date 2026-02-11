@@ -40,6 +40,10 @@ function validateImageUrl(urlStr) {
     /^192\.168\./,
     /^169\.254\./,
     /^0\./,
+    /^22[4-9]\./,
+    /^2[3-5]\d\./,
+    /^24[0-9]\./,
+    /^25[0-5]\./,
     /^\[::1\]/,
     /^\[fc/i,
     /^\[fd/i,
@@ -83,7 +87,7 @@ async function loadSourceImage(config) {
       }
 
       const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
-      if (contentLength > MAX_IMAGE_SIZE) {
+      if (contentLength > 0 && contentLength > MAX_IMAGE_SIZE) {
         throw new Error(`Image too large (${contentLength} bytes). Max: ${MAX_IMAGE_SIZE} bytes.`);
       }
 

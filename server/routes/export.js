@@ -56,9 +56,8 @@ router.post('/export-project', async (req, res) => {
     archive.on('error', (err) => {
       if (!res.headersSent) {
         res.status(500).json({ error: 'Archive error', message: err.message });
-      } else {
-        res.end();
       }
+      res.end();
     });
     res.on('close', () => {
       archive.abort();
