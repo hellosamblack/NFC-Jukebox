@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GENRE_NAMES } from '../utils/genres';
+import { GENRE_NAMES, detectGenreClient } from '../utils/genres';
 import { useProject } from '../hooks/useProject';
 import { getSpotifyAlbum, getSpotifyArtist } from '../services/api';
 import StickerPreview from './StickerPreview';
@@ -24,12 +24,18 @@ export default function StickerEditor({ item, onClose, editingSticker }) {
     try {
       const data = await getSpotifyAlbum(id, spotifyToken);
       if (data.genres?.length) {
-        setGenre(data.detectedGenre || 'Default');
+        // Use genreService-style detection on client side
+        setGenre('Default');
       }
-      if (data.artists?.[0]?.id) {
-        const artist = await getSpotifyArtist(data.artists[0].id, spotifyToken);
+      if (data.artistIds?.[0]) {
+        const artist = await getSpotifyArtist(data.artistIds[0], spotifyToken);
         if (artist.images?.[0]?.url) {
           setArtistImageUrl(artist.images[0].url);
+        }
+        if (artist.genres?.length) {
+          // Simple genre detection
+          const detected = detectGenreClient(artist.genres);
+          setGenre(detected);
         }
       }
     } catch {
@@ -55,7 +61,7 @@ export default function StickerEditor({ item, onClose, editingSticker }) {
     // YouTube item
     if (item.thumbnail) {
       setTitle(item.title || '');
-      setSubtitle(item.channelTitle || '');
+      setSubtitle(item.artist || item.channelTitle || '');
       setImageUrl(item.thumbnail);
       setAlbumImageUrl(item.thumbnail);
       return;
@@ -69,7 +75,7 @@ export default function StickerEditor({ item, onClose, editingSticker }) {
 
     if (item.type === 'album') {
       setTitle(item.name || '');
-      setSubtitle(item.artists?.map((a) => a.name).join(', ') || '');
+      setSubtitle(typeof item.artists === 'string' ? item.artists : item.artists?.join(', ') || '');
       fetchAlbumDetails(item.id);
     } else if (item.type === 'playlist') {
       setTitle(item.name || '');

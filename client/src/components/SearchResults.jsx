@@ -30,7 +30,7 @@ export default function SearchResults({ results, onSelect, onLoadMore, hasMore, 
                 {item.name || item.title}
               </p>
               <p className="text-[#a0a0b5] text-xs truncate mt-0.5">
-                {item.artists?.map((a) => a.name).join(', ') || item.owner || item.channelTitle || ''}
+                {item.artists || item.owner || item.artist || ''}
               </p>
               <span
                 className={`inline-block mt-1.5 text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full ${
