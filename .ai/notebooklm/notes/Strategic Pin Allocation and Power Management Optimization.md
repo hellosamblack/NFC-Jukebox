@@ -1,0 +1,12 @@
+Strategic Pin Allocation and Power Management Optimization
+To avoid exhausting your premium RTC-capable pins and to maintain deep sleep reliability, you should avoid wiring every human input directly to the main MCU [1]. Instead, divide your signals into three distinct functional classes: true wake-critical inputs, runtime-only inputs, and high-bandwidth signals [1, 2].
+1. Route Only Wake-Critical Inputs to RTC PinsReserve your dedicated RTC-capable pins strictly for asynchronous events that must wake the device from deep sleep [1]. These include:
+Card presence switch: Detects insertion to wake the MCU [3, 4].
+PIR sensor: Triggers a wake event when someone approaches [3].
+Bump/vibration sensor: Triggers a wake event when the device is moved or nudged [3].
+2. Conserve Pins Using Wake AggregationIf your MCU is severely constrained on RTC pins, you can combine several eligible wake events into a single consolidated wake net [3]. By utilizing a simple diode-OR logic circuit or an interrupt combiner (an inexpensive addition around 0.50–3.00), multiple triggers can share one wake line [3, 5]. Once the system wakes, your firmware can determine the specific trigger by reading the latched status or peripheral interrupt flags [3].
+3. Offload Runtime-Only InputsDo not waste premium pins on your six physical buttons (Volume Up/Down, Left, Right, Select, and the Big Red Skip) [1]. Instead, handle them using one of two strategies:
+An I2C GPIO expander (such as the MCP23017 or AW9523) [2, 5].
+A resistor ladder tied to a single ADC-capable input (if you do not need to support simultaneous button presses) [2]. If you need button presses to wake the device, you can route a single shared interrupt line from this button subsystem to one of the MCU's wake pins [2].
+4. Isolate High-Bandwidth DisplaysWith the buttons and slow peripherals relegated to an I2C expander, you can reserve the bulk of your fast, non-RTC pins for the primary display interface [2]. The secondary ePaper display has modest bandwidth needs and can safely share a standard SPI bus [2].
+5. Enforce Event-Driven NFC PollingTo guarantee low standby current, do not let the NFC reader poll continuously [6]. The sleep strategy should rely on the mechanical card presence switch to wake the MCU upon insertion [4, 7]. The MCU should then briefly enable the NFC reader, read the tag, publish the ID to Home Assistant, and immediately halt polling [4, 7]. The reader must remain disabled as long as the card is present, only re-arming the cycle once the card is removed [4].

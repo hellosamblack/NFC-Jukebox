@@ -1,0 +1,71 @@
+{
+  "configurations": [
+    {
+      "id": "discrete",
+      "name": "Discrete BOM (Original)",
+      "description": "The original high-fidelity strategy featuring a dedicated ePaper display for labels and physical IP67-rated buttons for all UI controls. Offers the most tactile and modular experience.",
+      "totalEstimate": 185.00,
+      "categories": [
+        {
+          "name": "Core Electronics",
+          "items": [
+            { "name": "ESP32-S3 DevKitC-1", "cost": 12.00, "qty": 1, "link": "https://www.amazon.com/Espressif-ESP32-S3-DevKitC-1-N8R8-Development-Board/dp/B09T9796S9" },
+            { "name": "PN532 NFC Module", "cost": 14.00, "qty": 1, "link": "https://www.elechouse.com/product/pn532-nfc-rfid-module-v4/" },
+            { "name": "3.5\" TFT LCD (SPI)", "cost": 28.00, "qty": 1, "link": "https://www.waveshare.com/esp32-s3-touch-lcd-3.5.htm" },
+            { "name": "2.13\" SPI ePaper", "cost": 18.00, "qty": 1, "link": "https://www.waveshare.com/2.13inch-e-paper-hat.htm" },
+            { "name": "PIR Sensor (AM312)", "cost": 2.50, "qty": 1, "link": "https://www.aliexpress.com/item/32846443341.html" },
+            { "name": "SW-420 Vibration Switch", "cost": 1.50, "qty": 1, "link": "https://www.sunfounder.com/products/sw-420-vibration-sensor-module" },
+            { "name": "Lever Limit Switch", "cost": 2.50, "qty": 1, "link": "https://www.aliexpress.com/item/1005005812345678.html" },
+            { "name": "100mm Arcade Button", "cost": 10.00, "qty": 1, "link": "https://www.adafruit.com/product/1185" },
+            { "name": "IP67 Sealed Buttons", "cost": 2.50, "qty": 5, "link": "https://www.aliexpress.com/item/1005005812345678.html" },
+            { "name": "10W Qi Receiver", "cost": 8.00, "qty": 1, "link": "https://www.aliexpress.com/item/1005006161286128.html" },
+            { "name": "18650 Battery Cell", "cost": 8.00, "qty": 1, "link": "https://www.18650batterystore.com/" },
+            { "name": "TP4056 Charger", "cost": 5.00, "qty": 1, "link": "https://www.aliexpress.com/item/32247291118.html" },
+            { "name": "N52 Ring Magnets", "cost": 8.00, "qty": 1, "link": "https://www.magnetshop.com/neodymium-ring-magnets" }
+          ]
+        },
+        {
+          "name": "Mechanicals & Helpers",
+          "items": [
+            { "name": "PETG/ASA Filament", "cost": 20.00, "qty": 1 },
+            { "name": "Gaskets & Fasteners", "cost": 15.00, "qty": 1 },
+            { "name": "MCP23017 I/O Expander", "cost": 2.50, "qty": 1 },
+            { "name": "Wiring & JST Kits", "cost": 8.00, "qty": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "integrated",
+      "name": "Integrated Strategy (Optimized)",
+      "description": "A cost-optimized approach using a single HMI module for the MCU, Display, and Power Management. Simplifies enclosure design and halves the total cost by utilizing touch-screen controls and removing the ePaper.",
+      "totalEstimate": 101.50,
+      "categories": [
+        {
+          "name": "Core Integrated Module",
+          "items": [
+            { "name": "Waveshare ESP32-S3-Touch-3.5", "cost": 31.00, "qty": 1, "link": "https://www.waveshare.com/esp32-s3-touch-lcd-3.5.htm", "note": "Replaces MCU, Display, and Charger" }
+          ]
+        },
+        {
+          "name": "Peripherals",
+          "items": [
+            { "name": "PN532 NFC Module", "cost": 14.00, "qty": 1, "link": "https://www.elechouse.com/product/pn532-nfc-rfid-module-v4/" },
+            { "name": "10W Qi Receiver", "cost": 8.00, "qty": 1, "link": "https://www.aliexpress.com/item/1005006161286128.html" },
+            { "name": "18650 Battery Cell", "cost": 8.00, "qty": 1, "link": "https://www.18650batterystore.com/" },
+            { "name": "60mm Arcade Button", "cost": 6.00, "qty": 1, "link": "https://shop.pimoroni.com/products/massive-arcade-button-with-led-100mm-red" },
+            { "name": "N52 Ring Magnets", "cost": 8.00, "qty": 1, "link": "https://www.magnetshop.com/neodymium-ring-magnets" },
+            { "name": "Sensor Kit (PIR/VIB/Presence)", "cost": 6.50, "qty": 1 }
+          ]
+        },
+        {
+          "name": "Mechanicals",
+          "items": [
+            { "name": "Budget Filament", "cost": 15.00, "qty": 1 },
+            { "name": "Fasteners & Seals", "cost": 5.00, "qty": 1 }
+          ]
+        }
+      ]
+    }
+  ]
+}
